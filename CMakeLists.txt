@@ -47,14 +47,8 @@ endif()
 # project name
 project(sfml)
 
-# catkin support
-find_package(catkin REQUIRED)
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES sfml-graphics sfml-window sfml-system GL GLU
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
-)
+# ament support
+find_package(ament_cmake REQUIRED)
 
 # include the configuration file
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake)
@@ -542,3 +536,5 @@ elseif(SFML_OS_ANDROID)
 endif()
 
 sfml_export_targets()
+
+ament_package()
