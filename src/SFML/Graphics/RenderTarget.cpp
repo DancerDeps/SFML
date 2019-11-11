@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////
 //
 // SFML - Simple and Fast Multimedia Library
-// Copyright (C) 2007-2018 Laurent Gomila (laurent@sfml-dev.org)
+// Copyright (C) 2007-2019 Laurent Gomila (laurent@sfml-dev.org)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -43,11 +43,11 @@
 
 
 // GL_QUADS is unavailable on OpenGL ES, thus we need to define GL_QUADS ourselves
-#ifdef SFML_OPENGL_ES
+#ifndef GL_QUADS
 
     #define GL_QUADS 0
 
-#endif // SFML_OPENGL_ES
+#endif // GL_QUADS
 
 
 namespace
@@ -129,7 +129,7 @@ RenderTarget::RenderTarget() :
 m_defaultView(),
 m_view       (),
 m_cache      (),
-m_id         (getUniqueId())
+m_id         (0)
 {
     m_cache.glStatesSet = false;
 }
@@ -547,6 +547,10 @@ void RenderTarget::initialize()
 
     // Set GL states only on first draw, so that we don't pollute user's states
     m_cache.glStatesSet = false;
+
+    // Generate a unique ID for this RenderTarget to track
+    // whether it is active within a specific context
+    m_id = getUniqueId();
 }
 
 
@@ -704,7 +708,7 @@ void RenderTarget::drawPrimitives(PrimitiveType type, std::size_t firstVertex, s
     GLenum mode = modes[type];
 
     // Draw the primitives
-    glCheck(glDrawArrays(mode, firstVertex, static_cast<GLsizei>(vertexCount)));
+    glCheck(glDrawArrays(mode, static_cast<GLint>(firstVertex), static_cast<GLsizei>(vertexCount)));
 }
 
 

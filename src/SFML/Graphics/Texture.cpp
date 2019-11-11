@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////
 //
 // SFML - Simple and Fast Multimedia Library
-// Copyright (C) 2007-2018 Laurent Gomila (laurent@sfml-dev.org)
+// Copyright (C) 2007-2019 Laurent Gomila (laurent@sfml-dev.org)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -92,10 +92,6 @@ m_cacheId      (getUniqueId())
         if (create(copy.getSize().x, copy.getSize().y))
         {
             update(copy);
-
-            // Force an OpenGL flush, so that the texture will appear updated
-            // in all contexts immediately (solves problems in multi-threaded apps)
-            glCheck(glFlush());
         }
         else
         {
@@ -129,6 +125,11 @@ bool Texture::create(unsigned int width, unsigned int height)
         return false;
     }
 
+    TransientContextLock lock;
+
+    // Make sure that extensions are initialized
+    priv::ensureExtensionsInit();
+
     // Compute the internal texture dimensions depending on NPOT textures support
     Vector2u actualSize(getValidSize(width), getValidSize(height));
 
@@ -150,8 +151,6 @@ bool Texture::create(unsigned int width, unsigned int height)
     m_pixelsFlipped = false;
     m_fboAttachment = false;
 
-    TransientContextLock lock;
-
     // Create the OpenGL texture if it doesn't exist yet
     if (!m_texture)
     {
@@ -160,13 +159,10 @@ bool Texture::create(unsigned int width, unsigned int height)
         m_texture = static_cast<unsigned int>(texture);
     }
 
-    // Make sure that extensions are initialized
-    priv::ensureExtensionsInit();
-
     // Make sure that the current texture binding will be preserved
     priv::TextureSaver save;
 
-    static bool textureEdgeClamp = GLEXT_texture_edge_clamp || GLEXT_EXT_texture_edge_clamp;
+    static bool textureEdgeClamp = GLEXT_texture_edge_clamp;
 
     if (!m_isRepeated && !textureEdgeClamp)
     {
@@ -659,7 +655,7 @@ void Texture::setRepeated(bool repeated)
             // Make sure that the current texture binding will be preserved
             priv::TextureSaver save;
 
-            static bool textureEdgeClamp = GLEXT_texture_edge_clamp || GLEXT_EXT_texture_edge_clamp;
+            static bool textureEdgeClamp = GLEXT_texture_edge_clamp;
 
             if (!m_isRepeated && !textureEdgeClamp)
             {
@@ -851,11 +847,6 @@ unsigned int Texture::getNativeHandle() const
 ////////////////////////////////////////////////////////////
 unsigned int Texture::getValidSize(unsigned int size)
 {
-    TransientContextLock lock;
-
-    // Make sure that extensions are initialized
-    priv::ensureExtensionsInit();
-
     if (GLEXT_texture_non_power_of_two)
     {
         // If hardware supports NPOT textures, then just return the unmodified size
